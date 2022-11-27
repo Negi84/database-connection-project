@@ -6,25 +6,42 @@ import "./App.css";
 function App() {
   const [movies, setMovies] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   async function fetchMoviesHandler() {
     setIsLoading(true);
-    const response = await fetch("https://swapi.dev/api/films/");
-    // .then((response) => {
-    //   //for converting the json object into javascript object
-    //   return response.json();
-    // })
-    const data = await response.json();
+    setError(null);
+    //invalid url https://swapi.dev/api/film/
+    //when we are not working with async await we uses catch to catch the error
+    // const response = await fetch("https://swapi.dev/api/film/").catch();
+    try {
+      const response = await fetch("https://swapi.dev/api/film/");
+      if (!response.ok) {
+        throw new Error("Something went wrong");
+      }
+      // .then((response) => {
+      //   //for converting the json object into javascript object
+      //   return response.json();
+      // })
+      const data = await response.json();
 
-    const transformedMovies = data.results.map((movieData) => {
-      return {
-        id: movieData.episode_id,
-        title: movieData.title,
-        openingText: movieData.opening_crawl,
-        releaseDate: movieData.release_date,
-      };
-    });
-    setMovies(transformedMovies);
+      //since we can not catpure what is the status code coming from
+      // the fetched API using the fetch()
+      // (but can easily achieve this same thing by using axios library)
+
+      const transformedMovies = data.results.map((movieData) => {
+        return {
+          id: movieData.episode_id,
+          title: movieData.title,
+          openingText: movieData.opening_crawl,
+          releaseDate: movieData.release_date,
+        };
+      });
+      setMovies(transformedMovies);
+    } catch (error) {
+      //error.message will be "Something went wrong"
+      setError(error.message);
+    }
     setIsLoading(false);
 
     // .then((data) => {
@@ -40,15 +57,28 @@ function App() {
     // });
   }
 
+  let content = <p>Found no movies</p>;
+  if (movies.length > 0) {
+    content = <MoviesList movies={movies} />;
+  }
+  if (error) {
+    content = <p>{error}</p>;
+  }
+  if (isLoading) {
+    content = <p>Loading...</p>;
+  }
+
   return (
     <React.Fragment>
       <section>
         <button onClick={fetchMoviesHandler}>Fetch Movies</button>
       </section>
       <section>
-        {!isLoading && movies.length > 0 && <MoviesList movies={movies} />}
-        {!isLoading && movies.length === 0 && <p>Found no movies</p>}
+        {content}
+        {/* {!isLoading && movies.length > 0 && <MoviesList movies={movies} />}
+        {!isLoading && !error && movies.length === 0 && <p>Found no movies</p>}
         {isLoading && <p>Loading...</p>}
+        {!isLoading && error && <p>{error}</p>} */}
       </section>
     </React.Fragment>
   );
